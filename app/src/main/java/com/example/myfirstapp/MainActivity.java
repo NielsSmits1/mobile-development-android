@@ -17,23 +17,19 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OverviewFragment.OnClickListener{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        List<Pokemon> pokemon = new ArrayList<>();
-        pokemon.add(new Pokemon("bulbasaur", R.drawable.bulbasaur));
-        pokemon.add(new Pokemon("dragonite", R.drawable.dragonite));
-        pokemon.add(new Pokemon("pickachu", R.drawable.pikachu));
-
-        PokemonAdapter adapter = new PokemonAdapter(pokemon);
-
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        recyclerView.setAdapter(adapter);
     }
 
 
+    @Override
+    public void onItemSelected(String pokemon) {
+        DetailFragment detailFragment = (DetailFragment) getSupportFragmentManager().findFragmentById(R.id.detailFragment);
+
+        detailFragment.setPokemon(pokemon);
+    }
 }
