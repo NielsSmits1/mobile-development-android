@@ -4,12 +4,15 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.IBinder;
+import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
 
@@ -40,6 +43,8 @@ public class PokemonService extends Service {
 
               sendBroadcast();
 
+              updateWidget();
+
               int FIVE_SECONDS = 5000;
               handler.postDelayed(this, FIVE_SECONDS);
             }
@@ -65,11 +70,17 @@ public class PokemonService extends Service {
     }
 
     void updateWidget() {
-        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        if(manager != null){
-            manager.notify(POKEMON_NOTIFICATION, getNotification());
-        }
+        RemoteViews remoteViews = new RemoteViews(this.getPackageName(), R.layout.pokemon_widget);
+        remoteViews.setImageViewResource(R.id.image_view, getIcon(favorite));
+        remoteViews.setOnClickPendingIntent(R.id.image_view, pendingIntent);
+
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this.getApplicationContext());
+        int[] AppWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(this, PokemonWidget.class));
+
+        appWidgetManager.updateAppWidget(AppWidgetIds, remoteViews);
     }
 
     @Override
