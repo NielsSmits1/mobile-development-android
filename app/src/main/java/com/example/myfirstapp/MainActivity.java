@@ -1,6 +1,7 @@
 package com.example.myfirstapp;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -16,10 +17,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -35,57 +38,58 @@ import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
-    static String POKEMON_CHANNEL = "POKEMON_CHANNEL";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-
-        setSupportActionBar(toolbar);
-
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            NotificationChannel channel = new NotificationChannel(POKEMON_CHANNEL, "Name", NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.createNotificationChannel(channel);
-        }
-
-        Intent intent = new Intent(this, PokemonService.class);
-        startService(intent);
+        setPokemon();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(PokemonService.POKEMON_BROADCAST);
-
-        registerReceiver(receiver, filter);
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        Intent intent = new Intent(this, SettingsActivity.class);
 
-        unregisterReceiver(receiver);
+        startActivityForResult(intent, 1);
+
+        return true;
     }
 
-    BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            int favorite = intent.getIntExtra("favorite", 0);
-            TextView textView = findViewById(R.id.textView);
-            ImageView imageView = findViewById(R.id.imageView);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
-            textView.setText(PokemonService.getName(favorite));
-            imageView.setImageResource(PokemonService.getIcon(favorite));
-        }
-    };
+        setPokemon();
+    }
+
+    void setPokemon()
+    {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean show = preferences.getBoolean("show", true);
+        String name = preferences.getString("name", "");
+        String pokemon = preferences.getString("pokemon", "");
+        boolean bckgrnd = preferences.getBoolean("background", true);
+        Set<String> flipping = preferences.getStringSet("flipping", Collections.<String>emptySet());
+        int icon = getResources().getIdentifier(pokemon, "drawable", getPackageName());
+        View view = findViewById(android.R.id.content);
+        view.setAlpha(show ? (float) 1.0 : (float) 0.25);
+        TextView textView = (TextView) findViewById(R.id.textView);
+        textView.setText(name);
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        imageView.setImageResource(icon != 0 ? icon : R.mipmap.ic_launcher);
+        imageView.setBackgroundResource(bckgrnd? android.R.color.darker_gray : android.R.color.transparent);
+        imageView.setScaleX(flipping.contains("horizontal") ? -1 : 1);
+        imageView.setScaleY(flipping.contains("vertical") ? -1 : 1);
+    }
 }
